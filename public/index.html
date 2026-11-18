@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>남을 위한 AI</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@1.3.9/dist/web/static/pretendard.min.css">
+<style>
+  :root{
+    --bg:#F6F7F9; --surface:#FFFFFF; --fg:#111318; --dim:#5F6672; --mute:#8E95A1;
+    --line:#E3E6EB; --accent:#2B5BFF; --accent-soft:#EAF0FF; --ok:#0F9D6B; --ok-soft:#E7F6EF;
+    --err:#6B7280; --err-soft:#F1F2F4; --radius:14px;
+    --shadow:0 1px 2px rgba(17,19,24,.04),0 8px 24px rgba(17,19,24,.06);
+  }
+  @media (prefers-color-scheme:dark){
+    :root{
+      --bg:#0D0E11; --surface:#16181D; --fg:#F3F4F6; --dim:#A3A9B4; --mute:#6E7480;
+      --line:#262A31; --accent:#5B82FF; --accent-soft:#1A2340; --ok:#3CCB95; --ok-soft:#12271F;
+      --err:#9AA1AC; --err-soft:#1C1F25; --shadow:none;
+    }
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{
+    background:var(--bg); color:var(--fg);
+    font-family:Pretendard,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+    -webkit-font-smoothing:antialiased; line-height:1.6;
+  }
+  .top{
+    position:sticky; top:0; z-index:5; backdrop-filter:saturate(1.4) blur(10px);
+    background:color-mix(in srgb,var(--bg) 82%,transparent); border-bottom:1px solid var(--line);
+  }
+  .top-in{max-width:680px; margin:0 auto; padding:12px 16px; display:flex; align-items:center; justify-content:space-between; gap:12px}
+  .brand{display:flex; align-items:center; gap:8px; font-weight:700; font-size:15px; letter-spacing:-.2px}
+  .dot{width:10px; height:10px; border-radius:50%; background:var(--accent); box-shadow:0 0 0 4px var(--accent-soft)}
+  .badge{font-size:12px; color:var(--dim); border:1px solid var(--line); border-radius:999px; padding:3px 10px; white-space:nowrap}
+
+  .wrap{max-width:680px; margin:0 auto; padding:40px 16px 64px}
+  h1{font-size:34px; line-height:1.22; letter-spacing:-1px; font-weight:800; margin:0 0 10px; word-break:keep-all}
+  .desc{color:var(--dim); font-size:16px; margin:0 0 28px; word-break:keep-all}
+
+  .card{background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow)}
+  .ask-box{padding:18px}
+  label{display:block; font-size:13px; font-weight:700; color:var(--dim); margin-bottom:8px}
+  textarea{
+    width:100%; min-height:120px; resize:vertical; padding:14px;
+    background:var(--bg); color:var(--fg); border:1px solid var(--line);
+    border-radius:10px; font:inherit; font-size:16px; line-height:1.6; transition:border-color .15s, box-shadow .15s;
+  }
+  textarea::placeholder{color:var(--mute)}
+  textarea:focus{outline:none; border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-soft)}
+  .row{display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:12px; flex-wrap:wrap}
+  .chip{
+    border:1px dashed var(--line); background:transparent; color:var(--dim);
+    font:inherit; font-size:13px; padding:6px 12px; border-radius:999px; cursor:pointer;
+  }
+  .chip:hover{color:var(--fg); border-color:var(--mute)}
+  .actions{display:flex; align-items:center; gap:10px; margin-left:auto}
+  .hint{font-size:12px; color:var(--mute)}
+  .go{
+    padding:11px 22px; border:0; border-radius:10px; background:var(--accent); color:#fff;
+    font:inherit; font-size:15px; font-weight:700; cursor:pointer; transition:transform .05s, opacity .15s;
+  }
+  .go:active{transform:translateY(1px)}
+  .go:disabled{opacity:.5; cursor:default}
+
+  #out{margin-top:16px}
+  .result{padding:18px; border-left:4px solid var(--ok)}
+  .result .tag{
+    display:inline-flex; align-items:center; gap:6px; font-size:12px; font-weight:700;
+    padding:3px 10px; border-radius:999px; background:var(--ok-soft); color:var(--ok); margin-bottom:10px;
+  }
+  .result .body{font-size:16px; line-height:1.75; white-space:pre-wrap; word-break:keep-all; overflow-wrap:anywhere}
+  .result.ask{border-left-color:var(--accent)}
+  .result.ask .tag{background:var(--accent-soft); color:var(--accent)}
+  .result.err{border-left-color:var(--err)}
+  .result.err .tag{background:var(--err-soft); color:var(--err)}
+  .result.wait{border-left-color:var(--line)}
+  .result.wait .tag{background:var(--err-soft); color:var(--dim)}
+  .result.wait .body{color:var(--dim)}
+  .copy{float:right; border:0; background:transparent; color:var(--mute); font:inherit; font-size:12px; cursor:pointer; padding:2px 4px}
+  .copy:hover{color:var(--fg)}
+
+  .foot{margin-top:40px; color:var(--mute); font-size:13px; line-height:1.8; display:flex; gap:10px}
+  .foot svg{flex:none; margin-top:3px}
+
+  @media (max-width:520px){
+    .wrap{padding:28px 16px 48px}
+    h1{font-size:27px}
+    .hint{display:none}
+    .actions{width:100%}
+    .go{width:100%}
+  }
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="top-in">
+    <div class="brand"><span class="dot"></span><span id="brand">남을 위한 AI</span></div>
+    <span class="badge">입력 내용 저장 안 함</span>
+  </div>
+</header>
+
+<main class="wrap">
+  <h1 id="title">준비 중</h1>
+  <p class="desc" id="desc"></p>
+
+  <section class="card ask-box">
+    <label for="q">무엇이 필요한가요</label>
+    <textarea id="q" placeholder=""></textarea>
+    <div class="row">
+      <button class="chip" id="ex" type="button" hidden>예시 넣기</button>
+      <div class="actions">
+        <span class="hint">Ctrl + Enter</span>
+        <button class="go" id="go" type="button">물어보기</button>
+      </div>
+    </div>
+  </section>
+
+  <div id="out" aria-live="polite"></div>
+
+  <footer class="foot">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+    <div>입력한 내용은 저장하지 않습니다. 답변을 만드는 데에만 쓰이고 바로 사라집니다.<br>
+    사람 이름, 연락처, 학번 같은 것은 적지 마세요.</div>
+  </footer>
+</main>
+
+<script>
+const $ = (id) => document.getElementById(id);
+let 예시 = "";
+
+fetch("/api/meta").then(r => r.json()).then(m => {
+  $("title").textContent = m.제목 || "남을 위한 AI";
+  $("brand").textContent = m.제목 || "남을 위한 AI";
+  $("desc").textContent = m.설명 || "";
+  $("q").placeholder = m.입력안내 || "";
+  $("go").textContent = m.버튼 || "물어보기";
+  document.title = m.제목 || document.title;
+  예시 = (m.입력안내 || "").replace(/^예\)\s*/, "");
+  if (예시) $("ex").hidden = false;
+}).catch(() => {});
+
+$("ex").addEventListener("click", () => { $("q").value = 예시; $("q").focus(); });
+
+function 보여주기(상태, 내용) {
+  const map = {
+    "물음": ["result ask", "먼저 확인할 것"],
+    "오류": ["result err", "실패"],
+    "대기": ["result wait", "생각하는 중"],
+  };
+  const [cls, tag] = map[상태] || ["result", "답"];
+  const copy = (상태 === "답") ? '<button class="copy" type="button">복사</button>' : "";
+  $("out").innerHTML = '<div class="card ' + cls + '">' + copy +
+    '<div class="tag">' + tag + '</div><div class="body"></div></div>';
+  $("out").querySelector(".body").textContent = 내용;
+  const c = $("out").querySelector(".copy");
+  if (c) c.addEventListener("click", () => {
+    navigator.clipboard?.writeText(내용).then(() => { c.textContent = "복사됨"; }).catch(() => {});
+  });
+}
+
+async function 물어보기() {
+  const 입력 = $("q").value.trim();
+  if (!입력) { $("q").focus(); return; }
+  $("go").disabled = true;
+  보여주기("대기", "답을 정리하고 있습니다…");
+  try {
+    const r = await fetch("/api/ask", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ 입력 }),
+    });
+    const d = await r.json();
+    보여주기(d.상태 || "답", d.내용 || "답을 받지 못했습니다.");
+  } catch {
+    보여주기("오류", "연결에 실패했습니다. 잠시 뒤 다시 시도해 주세요.");
+  } finally {
+    $("go").disabled = false;
+  }
+}
+
+$("go").addEventListener("click", 물어보기);
+$("q").addEventListener("keydown", (e) => {
+  if ((e.metaKey || e.ctrlKey) && e.key === "Enter") 물어보기();
+});
+</script>
+</body>
+</html>
